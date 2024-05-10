@@ -23,6 +23,7 @@ import { authFormSchema } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getLoggedInUser, signIn, signUp } from "@/lib/actions/user.actions";
+import PlaidLink from "./PlaidLink";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -30,10 +31,9 @@ const formSchema = z.object({
 });
 
 const AuthForm = ({ type }: { type: string }) => {
-    const router = useRouter();
+  const router = useRouter();
   const [user, setuser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
 
   const formSchema = authFormSchema(type);
 
@@ -46,33 +46,44 @@ const AuthForm = ({ type }: { type: string }) => {
   });
 
   // 2. Define a submit handler.
-  const onSubmit = async (data: z.infer<typeof formSchema>) =>{
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     setIsLoading(true);
     try {
-        //Sign up with appwrite and create a plaid link token
+      //Sign up with appwrite and create a plaid link token
 
-        if(type === "sign-up"){
-           const newUser =await signUp(data)
-              setuser(newUser)
+      if (type === "sign-up") {
+        const userData = {
+          firstName: data.firstName!,
+          lastName: data.lastName!,
+          address1: data.address1!,
+          city: data.city!,
+          state: data.state!,
+          postalCode: data.postalCode!,
+          dateOfBirth: data.dateOfBirth!,
+          ssn: data.ssn!,
+          email: data.email,
+          password: data.password,
+        };
+        const newUser = await signUp(userData);
+        setuser(newUser);
+      }
+      if (type === "sign-in") {
+        const response = await signIn({
+          email: data.email,
+          password: data.password,
+        });
+        if (response) {
+          router.push("/");
         }
-        if(type === "sign-in"){
-            const response = await signIn({
-                email: data.email,
-                password: data.password
-            }) 
-            if (response){
-                router.push("/")
-            }
-        }
+      }
     } catch (error) {
-        console.log(error);
-    } finally{
-        setIsLoading(false);
+      console.log(error);
+    } finally {
+      setIsLoading(false);
     }
-    
-  }
+  };
   return (
     <section className="auth-form">
       <header className="flex flex-col gap-5 md:gap-8">
@@ -99,116 +110,118 @@ const AuthForm = ({ type }: { type: string }) => {
         </div>
       </header>
       {user ? (
-        <div className="flex flex-col gap-4">{/* PlaidLink */}</div>
-      ) : (
-        <>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {type === "sign-up" && (
-                <>
-                  <div className="flex gap-4">
-                    <CustomInput
-                      control={form.control}
-                      name="firstName"
-                      label="First Name"
-                      placeholder="Enter your first name"
-                    />
-                    <CustomInput
-                      control={form.control}
-                      name="lastName"
-                      label="Last Name"
-                      placeholder="Enter your last name"
-                    />
-                  </div>
+      <div className="flex flex-col gap-4">
+        <PlaidLink user={user} variant="primary" />
+      </div>
+       ) : ( 
+      <>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {type === "sign-up" && (
+              <>
+                <div className="flex gap-4">
                   <CustomInput
                     control={form.control}
-                    name="address1"
-                    label="Address"
-                    placeholder="Enter your specific address"
+                    name="firstName"
+                    label="First Name"
+                    placeholder="Enter your first name"
                   />
-                   <CustomInput
+                  <CustomInput
                     control={form.control}
-                    name="city"
-                    label="City"
-                    placeholder="Enter your city"
+                    name="lastName"
+                    label="Last Name"
+                    placeholder="Enter your last name"
                   />
-                  <div className="flex gap-4">
-                    <CustomInput
-                      control={form.control}
-                      name="state"
-                      label="State"
-                      placeholder="ex: NY"
-                    />
-                    <CustomInput
-                      control={form.control}
-                      name="postalCode"
-                      label="Postal Code"
-                      placeholder="ex: 11101"
-                    />
-                  </div>
-                  <div className="flex gap-4">
-                    <CustomInput
-                      control={form.control}
-                      name="dateOfBirth"
-                      label="Date of Birth"
-                      placeholder="yyyy-mm-dd"
-                    />
-                    <CustomInput
-                      control={form.control}
-                      name="ssn"
-                      label="SSN"
-                      placeholder="ex: 1234"
-                    />
-                  </div>
-                </>
-              )}
+                </div>
+                <CustomInput
+                  control={form.control}
+                  name="address1"
+                  label="Address"
+                  placeholder="Enter your specific address"
+                />
+                <CustomInput
+                  control={form.control}
+                  name="city"
+                  label="City"
+                  placeholder="Enter your city"
+                />
+                <div className="flex gap-4">
+                  <CustomInput
+                    control={form.control}
+                    name="state"
+                    label="State"
+                    placeholder="ex: NY"
+                  />
+                  <CustomInput
+                    control={form.control}
+                    name="postalCode"
+                    label="Postal Code"
+                    placeholder="ex: 11101"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <CustomInput
+                    control={form.control}
+                    name="dateOfBirth"
+                    label="Date of Birth"
+                    placeholder="yyyy-mm-dd"
+                  />
+                  <CustomInput
+                    control={form.control}
+                    name="ssn"
+                    label="SSN"
+                    placeholder="ex: 1234"
+                  />
+                </div>
+              </>
+            )}
 
-              {/* Email field */}
-              <CustomInput
-                control={form.control}
-                name="email"
-                label="Email"
-                placeholder="Enter your Email"
-              />
-              {/* Password field */}
-              <CustomInput
-                control={form.control}
-                name="password"
-                label="Password"
-                placeholder="Enter your password"
-              />
+            {/* Email field */}
+            <CustomInput
+              control={form.control}
+              name="email"
+              label="Email"
+              placeholder="Enter your Email"
+            />
+            {/* Password field */}
+            <CustomInput
+              control={form.control}
+              name="password"
+              label="Password"
+              placeholder="Enter your password"
+            />
 
-              <div className="flex flex-col gap-4">
-                <Button type="submit" className="form-btn" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin" /> &nbsp;
-                      Loading...
-                    </>
-                  ) : type === "sign-in" ? (
-                    "Sign In"
-                  ) : (
-                    "Sign Up"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-          <footer className="flex justify-center gap-1">
-            <p className="text-14 font-normal text-gray-600">
-              {type === "sign-in"
-                ? "Don't have an account?"
-                : "Already have an account?"}
-            </p>
-            <Link
-              href={type === "sign-in" ? "/sign-up" : "/sign-in"}
-              className="form-link"
-            >
-              {type === "sign-in" ? "Sign Up" : "Sign In"}
-            </Link>
-          </footer>
-        </>
-      )}
+            <div className="flex flex-col gap-4">
+              <Button type="submit" className="form-btn" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" /> &nbsp;
+                    Loading...
+                  </>
+                ) : type === "sign-in" ? (
+                  "Sign In"
+                ) : (
+                  "Sign Up"
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+        <footer className="flex justify-center gap-1">
+          <p className="text-14 font-normal text-gray-600">
+            {type === "sign-in"
+              ? "Don't have an account?"
+              : "Already have an account?"}
+          </p>
+          <Link
+            href={type === "sign-in" ? "/sign-up" : "/sign-in"}
+            className="form-link"
+          >
+            {type === "sign-in" ? "Sign Up" : "Sign In"}
+          </Link>
+        </footer>
+      </>
+       )} 
     </section>
   );
 };
