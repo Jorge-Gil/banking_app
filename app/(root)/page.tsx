@@ -26,7 +26,7 @@ const Home = async ({searchParams: {id, page}}:SearchParamProps) => {
   // })
 
   
-  console.log("transactions:",accounts?.transactions)
+  // console.log("transactions:",accounts?.transactions)
 
   return (
     <section className="home">
